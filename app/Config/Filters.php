@@ -8,6 +8,7 @@ use CodeIgniter\Filters\DebugToolbar;
 use CodeIgniter\Filters\Honeypot;
 use CodeIgniter\Filters\InvalidChars;
 use CodeIgniter\Filters\SecureHeaders;
+use App\Filters\CORS;
 
 class Filters extends BaseConfig
 {
@@ -15,8 +16,9 @@ class Filters extends BaseConfig
      * Configures aliases for Filter classes to
      * make reading things nicer and simpler.
      *
-     * @var array<string, class-string|list<class-string>> [filter_name => classname]
-     *                                                     or [filter_name => [classname1, classname2, ...]]
+     * @var array<string, array<int, string>|string> [filter_name => classname]
+     *                                               or [filter_name => [classname1, classname2, ...]]
+     * @phpstan-var array<string, class-string|list<class-string>>
      */
     public array $aliases = [
         'csrf'          => CSRF::class,
@@ -24,16 +26,19 @@ class Filters extends BaseConfig
         'honeypot'      => Honeypot::class,
         'invalidchars'  => InvalidChars::class,
         'secureheaders' => SecureHeaders::class,
+        'cors'          => CORS::class, 
     ];
 
     /**
      * List of filter aliases that are always
      * applied before and after every request.
      *
-     * @var array<string, array<string, array<string, string>>>|array<string, list<string>>
+     * @var array<string, array<string, array<string, string>>>|array<string, array<string>>
+     * @phpstan-var array<string, list<string>>|array<string, array<string, array<string, string>>>
      */
     public array $globals = [
         'before' => [
+            'cors'
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
