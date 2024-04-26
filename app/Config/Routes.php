@@ -40,5 +40,37 @@ $routes->match(['post', 'options'], 'update/artikel/(:segment)', 'ArtikelControl
 $routes->match(['put', 'options'], 'artikel/(:segment)', 'ArtikelControl::update/$1');
 $routes->match(['delete', 'options'], 'delete/artikel/(:segment)', 'ArtikelControl::delete/$1');
 
+$routes->group("api", function ($routes) {
+$routes->post("register", "RegisterAdmin::index");
+$routes->post("login", "LoginAdmin::index");
+$routes->get("data_admin", "Admin::index", ['filter' => 'authFilter']);
+});
 
+// QUIZ 1
+$routes->get('/', 'Home::index');
+$routes->match(['get', 'options'], '/kuisioner', 'KuisionerControl::index');
+$routes->match(['post', 'options'], '/simpanHasil', 'KuisionerControl::simpanHasil');
+$routes->get('simpanHasil', 'KuisionerControl::read');
+$routes->get('semuaHasilKuisioner', 'KuisionerControl::readAll');
+$routes->match(['delete', 'options'], 'delete/kuisioner/(:segment)', 'KuisionerControl::delete/$1');
+
+// QUIZ 2
+$routes->get('getQuestions', 'KuisionerControl_2::index');
+$routes->match(['post', 'options'],'simpanHasil_2', 'KuisionerControl_2::simpanHasil_2');
+$routes->get('simpanHasil_2', 'KuisionerControl_2::read');
+$routes->get('semuaHasilKuisioner_2', 'KuisionerControl_2::readAll');
+$routes->match(['delete', 'options'], 'delete/simpanHasil_2/(:segment)', 'KuisionerControl_2::delete/$1');
+
+$routes->match(['get', 'options'], '/', 'Home::index');
+$routes->match(['get', 'options'], 'audio', 'AudioControl::index');
+$routes->match(['post', 'options'], 'audio', 'AudioControl::create');
+$routes->match(['post', 'options'], 'audio/ubah/(:num)', 'AudioControl::update/$1');
+$routes->match(['delete', 'options'], 'audio/(:num)', 'AudioControl::delete/$1');
+
+$routes->match(['get', 'options'], '/', 'Home::index');
+$routes->match(['get', 'options'], 'video', 'VideoControl::index');
+$routes->match(['get', 'options'], 'video/(:num)', 'VideoControl::show/$1');
+$routes->match(['post', 'options'], 'video', 'VideoControl::create');
+$routes->match(['post', 'options'], 'video/ubah/(:num)', 'VideoControl::update/$1');
+$routes->match(['delete', 'options'], 'video/(:num)', 'VideoControl::delete/$1');
 

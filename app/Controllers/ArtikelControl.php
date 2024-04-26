@@ -122,13 +122,13 @@ class ArtikelControl extends ResourceController
      * @return ResponseInterface
      */
     public function update($id = null)
-    {
-         // Validasi input
+{
+    // Validasi input
     $rules = $this->validate([
         'kategori'      => 'required',
         'judul'         => 'required',
         'isi'           => 'required',
-        'cover'         => 'uploaded[cover]|max_size[cover,5120]|is_image[cover]|mime_in[cover,image/jpg,image/jpeg,image/png]'
+        // Hapus validasi cover
     ]);
 
     if (!$rules) {
@@ -138,66 +138,44 @@ class ArtikelControl extends ResourceController
         return $this->failValidationErrors($response);
     }
 
-    // Ambil file cover
-    $cover = $this->request->getFile('cover');
+    // Persiapkan data untuk diupdate
+    $data = [
+        'kategori'   => esc($this->request->getVar('kategori')),
+        'judul'      => esc($this->request->getVar('judul')),
+        'isi'        => esc($this->request->getVar('isi')),
+    ];
 
     // Cek apakah ada file cover yang diupload
-    if ($cover->isValid() && !$cover->hasMoved()) {
-        // Generate nama baru untuk cover
-        $namaCover = $cover->getRandomName();
+    if ($cover = $this->request->getFile('cover')) {
+        if ($cover->isValid() && !$cover->hasMoved()) {
+            // Generate nama baru untuk cover
+            $namaCover = $cover->getRandomName();
 
-        // Pindahkan file cover baru ke direktori uploads
-        $cover->move('uploads', $namaCover);
+            // Pindahkan file cover baru ke direktori uploads
+            $cover->move('uploads', $namaCover);
 
-        // Persiapkan data untuk diupdate, termasuk nama cover baru
-        $data = [
-            'kategori'   => esc($this->request->getVar('kategori')),
-            'judul'      => esc($this->request->getVar('judul')),
-            'isi'        => esc($this->request->getVar('isi')),
-            'cover'      => $namaCover
-        ];
+            // Hapus file cover lama jika ada
+            $artikel = (new $this->artikelModel())->find($id);
+            if ($artikel['cover'] && file_exists('uploads/' . $artikel['cover'])) {
+                unlink('uploads/' . $artikel['cover']);
+            }
 
-        // Ambil data artikel yang akan diupdate
-        $model = new $this->artikelModel();
-        $artikel = $model->find($id);
-
-        // Hapus file cover lama jika ada dan update data artikel
-        if ($artikel['cover'] && file_exists('uploads/' . $artikel['cover'])) {
-            unlink('uploads/' . $artikel['cover']);
+            // Tambahkan nama cover baru ke data
+            $data['cover'] = $namaCover;
         }
-
-        $model->update($id, $data);
-
-        // Berikan response
-        $response = [
-            'message' => 'artikel berhasil diubah'
-        ];
-
-        return $this->respondCreated($response, 200);
-    } else {
-        // Gunakan nama cover lama jika tidak ada file yang diupload
-        $namaCover = $this->request->getPost('coverLama');
-
-        // Persiapkan data untuk diupdate, menggunakan nama cover lama
-        $data = [
-            'kategori'   => esc($this->request->getVar('kategori')),
-            'judul'      => esc($this->request->getVar('judul')),
-            'isi'        => esc($this->request->getVar('isi')),
-            'cover'      => $namaCover
-        ];
-
-        // Update data artikel tanpa mengubah cover
-        $model = new $this->artikelModel();
-        $model->update($id, $data);
-
-        // Berikan response
-        $response = [
-            'message' => 'artikel berhasil diubah'
-        ];
-
-        return $this->respondCreated($response, 200);
     }
-    }
+
+    // Update data artikel
+    $model = new $this->artikelModel();
+    $model->update($id, $data);
+
+    // Berikan response
+    $response = [
+        'message' => 'Artikel berhasil diubah'
+    ];
+
+    return $this->respondCreated($response, 200);
+}
 
     /**
      * Delete the designated resource object from the model.
@@ -225,7 +203,7 @@ class ArtikelControl extends ResourceController
         $model->delete($id);
 
         // Berikan response sukses
-        $response = [
+        $response = [   
             'message' => 'Artikel berhasil dihapus'
         ];
 

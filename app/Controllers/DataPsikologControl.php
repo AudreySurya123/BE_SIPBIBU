@@ -129,69 +129,26 @@ class DataPsikologControl extends ResourceController
 
 
     public function update($id = null)
-{
-    // Validasi input
-    $rules = $this->validate([
-        'nama'          => 'required',
-        'email'         => 'required',
-        'password'      => 'required',
-        'no_telepon'    => 'required',
-        'alamat'        => 'required',
-        'kelamin'       => 'required',
-        'sertifikat'    => 'uploaded[sertifikat]|max_size[sertifikat,3048]|is_image[sertifikat]|mime_in[sertifikat,image/jpg,image/jpeg,image/png]'
-    ]);
+    {
+        // Validasi input
+        $rules = $this->validate([
+            'nama'          => 'required',
+            'email'         => 'required',
+            'password'      => 'required',
+            'no_telepon'    => 'required',
+            'alamat'        => 'required',
+            'kelamin'       => 'required',
+            // Hapus validasi sertifikat
+        ]);
 
-    if (!$rules) {
-        $response = [
-            'message' => $this->validator->getErrors()
-        ];
-        return $this->failValidationErrors($response);
-    }
-
-    // Ambil file sertifikat
-    $sertifikat = $this->request->getFile('sertifikat');
-
-    // Cek apakah ada file sertifikat yang diupload
-    if ($sertifikat->isValid() && !$sertifikat->hasMoved()) {
-        // Generate nama baru untuk sertifikat
-        $namaSertifikat = $sertifikat->getRandomName();
-
-        // Pindahkan file sertifikat baru ke direktori uploads
-        $sertifikat->move('uploads', $namaSertifikat);
-
-        // Persiapkan data untuk diupdate, termasuk nama sertifikat baru
-        $data = [
-            'nama'       => esc($this->request->getVar('nama')),
-            'email'      => esc($this->request->getVar('email')),
-            'password'   => esc($this->request->getVar('password')),
-            'no_telepon' => esc($this->request->getVar('no_telepon')),
-            'alamat'     => esc($this->request->getVar('alamat')),
-            'kelamin'    => esc($this->request->getVar('kelamin')),
-            'sertifikat' => $namaSertifikat
-        ];
-
-        // Ambil data psikolog yang akan diupdate
-        $model = new $this->DataPsikologModel();
-        $psikolog = $model->find($id);
-
-        // Hapus file sertifikat lama jika ada dan update data psikolog
-        if ($psikolog['sertifikat'] && file_exists('uploads/' . $psikolog['sertifikat'])) {
-            unlink('uploads/' . $psikolog['sertifikat']);
+        if (!$rules) {
+            $response = [
+                'message' => $this->validator->getErrors()
+            ];
+            return $this->failValidationErrors($response);
         }
 
-        $model->update($id, $data);
-
-        // Berikan response
-        $response = [
-            'message' => 'Psikolog berhasil diubah'
-        ];
-
-        return $this->respondCreated($response, 200);
-    } else {
-        // Gunakan nama sertifikat lama jika tidak ada file yang diupload
-        $namaSertifikat = $this->request->getPost('sertifikatLama');
-
-        // Persiapkan data untuk diupdate, menggunakan nama sertifikat lama
+        // Persiapkan data untuk diupdate
         $data = [
             'nama'       => esc($this->request->getVar('nama')),
             'email'      => esc($this->request->getVar('email')),
@@ -199,10 +156,29 @@ class DataPsikologControl extends ResourceController
             'no_telepon' => esc($this->request->getVar('no_telepon')),
             'alamat'     => esc($this->request->getVar('alamat')),
             'kelamin'    => esc($this->request->getVar('kelamin')),
-            'sertifikat' => $namaSertifikat
         ];
 
-        // Update data psikolog tanpa mengubah sertifikat
+        // Cek apakah ada file sertifikat yang diupload
+        if ($sertifikat = $this->request->getFile('sertifikat')) {
+            if ($sertifikat->isValid() && !$sertifikat->hasMoved()) {
+                // Generate nama baru untuk sertifikat
+                $namaSertifikat = $sertifikat->getRandomName();
+
+                // Pindahkan file sertifikat baru ke direktori uploads
+                $sertifikat->move('uploads', $namaSertifikat);
+
+                // Hapus file sertifikat lama jika ada
+                $psikolog = (new $this->DataPsikologModel())->find($id);
+                if ($psikolog['sertifikat'] && file_exists('uploads/' . $psikolog['sertifikat'])) {
+                    unlink('uploads/' . $psikolog['sertifikat']);
+                }
+
+                // Tambahkan nama sertifikat baru ke data
+                $data['sertifikat'] = $namaSertifikat;
+            }
+        }
+
+        // Update data psikolog
         $model = new $this->DataPsikologModel();
         $model->update($id, $data);
 
@@ -213,7 +189,6 @@ class DataPsikologControl extends ResourceController
 
         return $this->respondCreated($response, 200);
     }
-}
 
 
         // IKI CONTROLLER DELETE DATA!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
